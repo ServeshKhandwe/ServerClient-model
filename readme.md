@@ -1,108 +1,65 @@
-# Prompt Generation Microservice
+# Ollama FastAPI Integration
 
-This repository implements a prompt generation service using FastAPI. The project includes both synchronous and asynchronous endpoints to interface with external text generation services, along with a command-line interface for testing.
+This project provides a simple FastAPI application that acts as an intermediary between your local Ollama instance and clients (e.g., Postman or custom applications). It allows you to:
 
-## Features
+- **Set a System Prompt:** Configure a system prompt for your model to guide its responses.
+- **Generate Text:** Send prompts to your Ollama model and receive generated responses.
 
-- **Synchronous Endpoint:**  
-  Provides an API endpoint (`main.py`) that accepts user prompts, forwards them to an external service, and returns the generated response.
-  
-- **Asynchronous Endpoint:**  
-  Implements an asynchronous endpoint (`server.py`) using the `httpx` library to forward prompts to an OLLAMA server.
-  
-- **Command-Line Client:**  
-  A CLI tool (`main2.py`) that interacts with the synchronous API endpoint for local testing and debugging.
+The app is designed to support a longer context window and a generous HTTP timeout to accommodate the demands of larger prompts and more complex responses.
 
-## Prerequisites
+## Why This Project?
 
-- Python 3.x
-- FastAPI
-- Uvicorn
-- Requests
-- HTTPx
-- Pydantic
+- **Local Model Integration:** Easily integrate and experiment with locally hosted language models powered by Ollama.
+- **Flexible Configuration:** Dynamically set system prompts to adjust the model's behavior for specific tasks (e.g., answering in one word, following instructions, etc.).
+- **Enhanced Usability:** Use tools like Postman or curl to interact with your model via a straightforward API.
+- **Robust and Extendable:** With built-in logging and configurable parameters (like context window size and timeout), the project is ready for further development and debugging.
 
-## Installation
+## Example Usage
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository_url>
-   cd <repository_folder>
-   ```
+### 1. Start Your Ollama Server
 
-2. **Create and activate a virtual environment**
-   - On Windows:
-     ```bash
-     python -m venv .venv
-     .venv\Scripts\activate
-     ```
-   - On Unix or macOS:
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
+Ensure that Ollama is installed and running on your machine. By default, it listens on `http://localhost:11434`.
 
-3. **Install the dependencies**
-   ```bash
-   pip install fastapi uvicorn requests httpx pydantic
-   ```
+```bash
+ollama serve
+```
 
-## Usage
+### 2. Run the FastAPI App
+Start the FastAPI application with Uvicorn:
 
-### Running the Synchronous API (main.py)
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
 
-Start the FastAPI server with Uvicorn:
+### 3. Set a System Prompt
+Use Postman or curl to set a system prompt for your model. For example, to instruct the model to answer questions in one word:
 
-bash
-uvicorn main:app --reload
+- Endpoint: POST http://localhost:8000/set_system_prompt
 
+- Headers: Content-Type: application/json
+- Body:
+```bash
+{
+  "system_prompt": "Only answer questions in one word: True or False."
+}
+```
 
-The synchronous endpoint will be available at:  
-`http://0.0.0.0:8000/generate`
+### 4. Generate Text
+Now, generate a response from your model by sending a prompt:
 
-### Running the Asynchronous API (server.py)
+- Endpoint: POST http://localhost:8000/generate
+- Headers: Content-Type: application/json
+- Body:
 
-Start the asynchronous server with Uvicorn:
+```bash
+{
+  "prompt": "Does the Earth rotate?"
+}
+```
 
-bash
-uvicorn server:app --reload
+The response will include the generated answer, formatted according to the system prompt you set.
 
-
-The asynchronous endpoint is available at:  
-`http://localhost:8000/generate/`
-
-### Using the Command-Line Client (main2.py)
-
-Ensure that one of the APIs is running, then execute:
-
-bash
-python main2.py
-
-The CLI will continuously prompt you to enter a text prompt. Type 'exit' to quit the client.
-
-## File Structure
-
-.
-├── .gitignore # Ignores virtual environment and cache files.
-├── main.py # Synchronous API endpoint implemented in FastAPI.
-├── server.py # Asynchronous API endpoint using httpx.AsyncClient.
-└── main2.py # Command-line client for local testing.
-
-
-## License
-
-[MIT License](LICENSE) *(or replace with your preferred license)*
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Open a pull request.
-
-## Acknowledgements
-
-- Built with [FastAPI](https://fastapi.tiangolo.com/).
-- Thanks to all contributors and the open source community for their support.
+## Customization
+- Model Selection: The model used for requests is defined in the MODEL_NAME variable in main.py. Change it as needed.
+- Context Window: The ctx_size parameter is set to 8192 to allow longer inputs. Adjust this value based on your model’s capabilities.
+- Timeouts: The HTTP client timeout is set to 120 seconds. This can be increased or decreased as required.
